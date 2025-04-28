@@ -2,16 +2,16 @@
 #include <WiFiSSLClient.h> // Use WiFiSSLClient for HTTPS
 
 // WiFi Credentials
-char ssid[] = "crack"; 
-char pass[] = "rostiklox";     
+char ssid[] = "YourHotSpotName"; 
+char pass[] = "YourHotSpotPassword";     
 
 int status = WL_IDLE_STATUS; // the WiFi radio's status
 
 // Google Apps Script Web App URL details
 const char* host = "script.google.com";
 const int httpsPort = 443;
-// Make sure this is your deployed script URL (after new deployment)
-String scriptPath = "/macros/s/AKfycbxKGg9njzxi2o-cGNauC3r5zx_Jz8L08TyS3yj3WVGtxy7rpRhdkKE6NU1dDV2Mfdu6iQ/exec";
+// MAKE SURE this is your deployed script URL (after new deployment)
+String scriptPath = "/macros/s/[paste your deployed script URL HERE]/exec";
 
 void setup() {
   Serial.begin(9600);
@@ -105,9 +105,12 @@ void sendDataToSheet(long turbidity, float temperature) {
 
 void loop() {
   // Generate sensor data (fake values)
-  long turbidity = random(0, 100);
-  float temperature = random(0, 1000) / 10.0;
-  
+  long turbidity = random(0, 1000); // change to 0 to 1000
+  float temperature = random(0, 100); // change to 0 100
+  /*
+  add if temp > 50 = too hot to drink
+  add sth about turbidity
+  */
   Serial.println("\n****************************");
   Serial.println("Generating new sensor data:");
   Serial.print("Turbidity: ");
