@@ -2,8 +2,8 @@
 #include <WiFiSSLClient.h> // Use WiFiSSLClient for HTTPS
 
 // WiFi Credentials
-char ssid[] = "YourHotSpotName"; 
-char pass[] = "YourHotSpotPassword";     
+char ssid[] = "YOUR_WIFI_NAME"; // <-- Put your WiFi name here
+char pass[] = "yOUR_WIFI_PASSWORD"; // <-- Put your WiFi password here
 
 int status = WL_IDLE_STATUS; // the WiFi radio's status
 
@@ -11,24 +11,31 @@ int status = WL_IDLE_STATUS; // the WiFi radio's status
 const char* host = "script.google.com";
 const int httpsPort = 443;
 // MAKE SURE this is your deployed script URL (after new deployment)
-String scriptPath = "/macros/s/[paste your deployed script URL HERE]/exec";
+String scriptPath = "/macros/s/[YOUR_SCRIPT_URL]/exec"; // <-- PASTE SCRIPT URL
+
+// --- DEFINE YOUR THRESHOLDS HERE ---
+const long TURBIDITY_CLEAR_THRESHOLD = 50; // Example: Turbidity < 50 is "clear"
+const float TEMP_COLD_THRESHOLD = 15.0;   // Example: Temp < 15C is "cold"
+const float TEMP_GOOD_MAX_THRESHOLD = 25.0; // Example: Temp <= 25C (and >=15C) is "good"
+// Temperatures > TEMP_GOOD_MAX_THRESHOLD will be "warm"
+// --- END OF THRESHOLDS ---
+
 
 void setup() {
   Serial.begin(9600);
   delay(1000);  // Short delay to stabilize
 
-  // check for the WiFi module:
+  // Check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE) {
     Serial.println("Communication with WiFi module failed!");
     while (true);
   }
 
-  // attempt to connect to WiFi network:
+  // Attempt to connect to WiFi network:
   Serial.print("Connecting to WiFi SSID: ");
   Serial.println(ssid);
   while (status != WL_CONNECTED) {
     status = WiFi.begin(ssid, pass);
-    // wait for connection:
     delay(5000);
   }
 
@@ -37,7 +44,8 @@ void setup() {
   Serial.println(WiFi.localIP());
 }
 
-void sendDataToSheet(long turbidity, float temperature) {
+// MODIFIED: Added 'finalResult' parameter
+void sendDataToSheet(long turbidity, float temperature, String safetyStatus) {
   WiFiSSLClient client;
   
   Serial.println("\n------------------------------");
@@ -49,9 +57,14 @@ void sendDataToSheet(long turbidity, float temperature) {
     return;
   }
   
-  // Build URL with parameters
-  String url = scriptPath + "?turbidity=" + String(turbidity) + "&temperature=" + String(temperature);
-  
+  // MODIFIED: Added 'safetyStatus' parameter to the URL
+  String url = scriptPath + "?turbidity=" + String(turbidity) +
+               "&temperature=" + String(temperature) +
+               "&safetyStatus=" + safetyStatus; // Added safetyStatus parameter
+               
+  // Quick URL encoding for safetyStatus (handles potential spaces, though unlikely for SAFE/UNSAFE)
+  url.replace(" ", "%20"); 
+
   Serial.println("Request URL:");
   Serial.println("https://" + String(host) + url);
   
@@ -88,12 +101,8 @@ void sendDataToSheet(long turbidity, float temperature) {
       Serial.println(responseStatus);
     }
     
-    // Empty line marks end of headers
-    if (line == "") {
-      headersDone = true;
-    }
+    if (line == "") { headersDone = true; }
     
-    // Print response body
     if (headersDone && line.length() > 0) {
       Serial.println("BODY: " + line);
     }
@@ -105,12 +114,9 @@ void sendDataToSheet(long turbidity, float temperature) {
 
 void loop() {
   // Generate sensor data (fake values)
-  long turbidity = random(0, 1000); // change to 0 to 1000
-  float temperature = random(0, 100); // change to 0 100
-  /*
-  add if temp > 50 = too hot to drink
-  add sth about turbidity
-  */
+  long turbidity = random(0, 1000); // Range 0 to 1000
+  float temperature = random(0, 100); // Range 0 to 100 C
+
   Serial.println("\n****************************");
   Serial.println("Generating new sensor data:");
   Serial.print("Turbidity: ");
@@ -118,15 +124,55 @@ void loop() {
   Serial.print(", Temperature: ");
   Serial.println(temperature);
 
+  // --- ADDED: Calculate Status Strings ---
+  String turbidityStatus;
+  String temperatureStatus;
+
+  // Determine Turbidity Status
+  if (turbidity < TURBIDITY_CLEAR_THRESHOLD) {
+    turbidityStatus = "clear";
+  } else {
+    turbidityStatus = "cloudy"; // Assuming anything not clear is cloudy
+  }
+  Serial.print("Turbidity Status: ");
+  Serial.println(turbidityStatus);
+
+  // Determine Temperature Status
+  if (temperature < TEMP_COLD_THRESHOLD) {
+    temperatureStatus = "cold";
+  } else if (temperature <= TEMP_GOOD_MAX_THRESHOLD) {
+    temperatureStatus = "good";
+  } else {
+    temperatureStatus = "warm";
+  }
+  Serial.print("Temperature Status: ");
+  Serial.println(temperatureStatus);
+  // --- END OF Status Calculation ---
+
+
+  // --- IMPLEMENTED: Your Analysis Snippet ---
+  String finalResult; // This will hold SAFE, NOT IDEAL, or UNSAFE
+  Serial.print("Overall Analysis: ");
+  if (turbidityStatus == "clear" && temperatureStatus == "good") {
+    finalResult = "SAFE";
+    Serial.println("Water is SAFE to drink.");
+  } else if (turbidityStatus == "clear" && (temperatureStatus == "cold" || temperatureStatus == "warm")) {
+    finalResult = "NOT IDEAL";
+    Serial.println("Water is drinkable but temperature is not ideal.");
+  } else { // Covers cloudy turbidity OR clear but not good/cold/warm (though that last case is unlikely with current logic)
+    finalResult = "UNSAFE";
+    Serial.println("Water is UNSAFE to drink.");
+  }
+  // --- END OF Analysis Snippet ---
+
   // Send data using Apps Script method
   if (WiFi.status() == WL_CONNECTED) {
-    sendDataToSheet(turbidity, temperature);
+    // MODIFIED: Pass the 'finalResult' to the function
+    sendDataToSheet(turbidity, temperature, finalResult);
   } else {
     Serial.println("WiFi Disconnected. Attempting to reconnect...");
     status = WiFi.begin(ssid, pass);
   }
 
-  
-
-  delay(30000); // Send data every minute
+  delay(30000); // Send data every 30 seconds
 }
