@@ -1,141 +1,146 @@
 // === CONFIGURATION ===
-const AQICN_TOKEN = "79dbdddb9819eeaacc4e4c09a9ba7ac5a9b8ecae"; // REPLACE with your new token
-const SPREADSHEET_ID = '1se7rWs55vOttLGmBw_8x33rYeCIS2SM_FHJAbLdqBNM';
+const AQICN_TOKEN = "YOUR_TOKEN"; // Your token 
+const SPREADSHEET_ID = 'YOUR_ID'; // Your Sheet ID
 
 function doGet(e) { 
-  Logger.log(JSON.stringify(e));
+  Logger.log("Received request: " + JSON.stringify(e)); // Log incoming request
   var result = 'Ok';
 
   var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getActiveSheet();
 
-  // Add headers if not present
-  if (sheet.getLastRow() === 0 || sheet.getRange("A1").getValue() !== "Date") {
-    // Add headers to the first row
-    sheet.getRange("A1:H1").setValues([["Date", "Turbidity", "pH", "AQI Sligo", "PM2.5 Sligo", "PM10 Sligo", "Temperature Sligo", "Humidity level"]]);
-    
-    // Make headers bold and centered
-    sheet.getRange("A1:H1").setFontWeight("bold").setHorizontalAlignment("center");
-    
-    // Freeze the header row so it stays visible when scrolling
+  // MODIFIED: Add "Water Safety" header and adjust column count/check
+  const expectedHeaders = ["Date", "Turbidity", "Water Temperature", "Water Safety", "AQI Sligo", "PM2.5 Sligo", "PM10 Sligo", "Temperature Sligo", "Humidity level"]; // Added "Water Safety"
+  const headerRange = "A1:I1"; // Now 9 columns
+  const headerColumnCount = expectedHeaders.length;
+
+  if (sheet.getLastRow() === 0 || sheet.getRange("A1").getValue() !== expectedHeaders[0] || sheet.getRange("D1").getValue() !== expectedHeaders[3]) {
+    // Add headers if first row is empty or first/fourth header doesn't match
+    sheet.getRange(headerRange).setValues([expectedHeaders]);
+    sheet.getRange(headerRange).setFontWeight("bold").setHorizontalAlignment("center");
     sheet.setFrozenRows(1);
+    Logger.log("Headers set/updated.");
   }
+
   var newRow = sheet.getLastRow() + 1;
   var rowData = [];
-  rowData[0] = new Date(); // Timestamp in column A
+  
+  // Column A: Timestamp
+  rowData[0] = new Date(); 
 
   // Arduino data
   if (e && e.parameter) {
-    rowData[1] = e.parameter.turbidity || "";
-    rowData[2] = e.parameter.temperature || "";
+    // Column B: Turbidity
+    rowData[1] = e.parameter.turbidity || ""; 
+    // Column C: Temperature (Assuming this was meant to be Temp, header says pH?) - Mapped to pH column based on header
+    rowData[2] = e.parameter.temperature || ""; 
+    // --- ADDED: Column D: Water Safety Status ---
+    rowData[3] = e.parameter.safetyStatus || ""; // Get the safetyStatus parameter
+    // --- END ---
   } else {
-    rowData[1] = "";
-    rowData[2] = "";
+    rowData[1] = ""; // Turbidity
+    rowData[2] = ""; // Temperature/pH
+    rowData[3] = ""; // Water Safety
   }
 
-  // AQICN Data - Try multiple endpoints for Sligo
+  // AQICN Data - Indices shifted due to added column
   var aqData = tryMultipleAqiEndpoints();
-  rowData[3] = aqData.aqi;
-  rowData[4] = aqData.pm25;
-  rowData[5] = aqData.pm10;
-  rowData[6] = aqData.temperature;
-  rowData[7] = aqData.humidity;
+  // Column E: AQI Sligo
+  rowData[4] = aqData.aqi;
+  // Column F: PM2.5 Sligo
+  rowData[5] = aqData.pm25;
+  // Column G: PM10 Sligo
+  rowData[6] = aqData.pm10;
+  // Column H: Temperature Sligo
+  rowData[7] = aqData.temperature;
+  // Column I: Humidity level
+  rowData[8] = aqData.humidity;
 
-  // Write new row to spreadsheet
-  var newRange = sheet.getRange(newRow, 1, 1, rowData.length);
+  Logger.log("Row data to write: " + JSON.stringify(rowData));
+
+  // Write new row to spreadsheet - MODIFIED: Use headerColumnCount
+  var newRange = sheet.getRange(newRow, 1, 1, headerColumnCount);
   newRange.setValues([rowData]);
   
-  // Return result
+  Logger.log("Data written successfully to row " + newRow);
  
-  return ContentService.createTextOutput("Success: Data logged with AQI");
+  return ContentService.createTextOutput("Success: Data logged including Safety Status and AQI");
 }
 
-// Try multiple possible endpoints for Sligo
+// REVISED: Try multiple possible endpoints for Sligo, including sligo-town, with enhanced logging
 function tryMultipleAqiEndpoints() {
-  // Array of possible endpoints to try
   const endpoints = [
+    // ADDED: The specific endpoint likely tested successfully in the browser
+    `https://api.waqi.info/feed/ireland/sligo-town/?token=${AQICN_TOKEN}`, 
+    // Existing endpoints
     `https://api.waqi.info/feed/sligo/?token=${AQICN_TOKEN}`,
     `https://api.waqi.info/feed/ireland/sligo/?token=${AQICN_TOKEN}`,
-    `https://api.waqi.info/feed/geo:54.277;-8.474/?token=${AQICN_TOKEN}` // Sligo coordinates
+    `https://api.waqi.info/feed/geo:54.277;-8.474/?token=${AQICN_TOKEN}` 
   ];
   
-  for (let endpoint of endpoints) {
-    try {
-      const response = UrlFetchApp.fetch(endpoint, {muteHttpExceptions: true});
-      const data = JSON.parse(response.getContentText());
-      
-      if (data.status === "ok") {
-        Logger.log("Successful API call with endpoint: " + endpoint);
-        return {
-          aqi: data.data.aqi || "N/A",
-          pm25: data.data.iaqi.pm25 ? data.data.iaqi.pm25.v : "N/A",
-          pm10: data.data.iaqi.pm10 ? data.data.iaqi.pm10.v : "N/A",
-          temperature: data.data.iaqi.t ? data.data.iaqi.t.v : "N/A",
-          humidity: data.data.iaqi.h ? data.data.iaqi.h.v : "N/A"
-        };
-      }
-      Logger.log("Endpoint failed: " + endpoint + " - Status: " + data.status);
-    } catch (err) {
-      Logger.log("Error with endpoint " + endpoint + ": " + err);
-    }
-  }
+  var lastError = "No endpoints attempted."; // Default error message
   
-  // If all endpoints fail, return error values
+  Logger.log("Attempting to fetch AQI data using token: " + AQICN_TOKEN); // Log the token being used (verify it looks right)
+
+  for (let i = 0; i < endpoints.length; i++) {
+    let endpoint = endpoints[i];
+    Logger.log(`Attempting endpoint #${i + 1}: ${endpoint}`); // Log the exact URL
+    try {
+      // Fetch response WITH status code
+      const response = UrlFetchApp.fetch(endpoint, {muteHttpExceptions: true});
+      const responseCode = response.getResponseCode();
+      const responseText = response.getContentText();
+      
+      Logger.log(`Endpoint #${i + 1} responded with HTTP status code: ${responseCode}`); // Log the status code
+      // Optional: Log the raw response text for debugging, but can be noisy
+      // Logger.log(`Endpoint #${i + 1} raw response: ${responseText}`); 
+
+      // Check for successful HTTP status (200 OK) before parsing JSON
+      if (responseCode === 200) {
+        const data = JSON.parse(responseText);
+        // Check if the API's internal status is "ok"
+        if (data.status === "ok") {
+          Logger.log("Successful API call with endpoint: " + endpoint);
+          // Return the extracted data
+          return {
+            aqi: data.data.aqi || "N/A",
+            pm25: data.data.iaqi && data.data.iaqi.pm25 ? data.data.iaqi.pm25.v : "N/A",
+            pm10: data.data.iaqi && data.data.iaqi.pm10 ? data.data.iaqi.pm10.v : "N/A",
+            temperature: data.data.iaqi && data.data.iaqi.t ? data.data.iaqi.t.v : "N/A",
+            humidity: data.data.iaqi && data.data.iaqi.h ? data.data.iaqi.h.v : "N/A"
+          };
+        } else {
+          lastError = `API Error (Status ${data.status}) from endpoint: ${endpoint}`;
+          Logger.log(`Endpoint #${i + 1} failed - API Status: ${data.status}`);
+        }
+      } else {
+        // Handle non-200 HTTP responses (like 403 Forbidden, 404 Not Found, 429 Too Many Requests, or 5xx Server Errors)
+        lastError = `HTTP Error ${responseCode} from endpoint: ${endpoint}`;
+        Logger.log(`Endpoint #${i + 1} failed - HTTP Status: ${responseCode}. Response: ${responseText}`);
+        // Specifically check for "Invalid key" in the response if it's a 4xx error
+        if (responseCode >= 400 && responseCode < 500 && responseText.includes("Invalid key")) {
+           Logger.log(">>> Detected 'Invalid key' response from server for this endpoint.");
+           // You could decide to stop trying other endpoints if you get an explicit Invalid Key
+           // break; 
+        }
+      }
+    } catch (err) {
+      // Catch errors during the fetch itself (e.g., network timeout, DNS error)
+      lastError = `Fetch Exception for endpoint ${endpoint}: ${err.message}`;
+      Logger.log(`Endpoint #${i + 1} failed - Exception: ${err}`);
+    }
+  } // End of loop
+  
+  // If all endpoints fail, log the last encountered error and return the error object
+  Logger.log("All endpoints failed. Last error: " + lastError);
   return {aqi:"API Error", pm25:"N/A", pm10:"N/A", temperature:"N/A", humidity:"N/A"};
 }
 
-// Set up spreadsheet headers
-function setupHeaders(sheet) {
-  const headers = [
-    "Time", 
-    "Turbidity", 
-    "Temperature (Arduino)", 
-    "Air Quality Index (Sligo)",
-    "PM2.5",
-    "PM10",
-    "Temperature (API)",
-    "Humidity"
-  ];
-  
-  sheet.appendRow(headers);
-  sheet.getRange("A1:H1").setFontWeight("bold").setHorizontalAlignment("center");
-  sheet.setFrozenRows(1);
-}
 
-// Test function to check API endpoints
+
+// Test function to check API endpoints (No changes needed here)
 function testEndpoints() {
   const result = tryMultipleAqiEndpoints();
   Logger.log(JSON.stringify(result));
 }
 
-// function for GPT API implementation
-function GPT(inputString, cellRange) {
-  const url = 'https://598bff78-c282-4675-9c4f-5143fdd01726-00-27kic6u049b52.kirk.replit.dev/api/chat'; // Replace with your API endpoint
 
-  // cellRange is already an array of values
-  const rangeValues = cellRange;
-  
-  // Flatten the range values into a single array if needed
-  const flattenedValues = rangeValues.flat();
-
-  const payload = {
-    'yourDataField1': inputString, // Adjust according to your API requirements
-    'yourDataField2': flattenedValues // Adjust according to your API requirements
-  };
-
-  const options = {
-    'method': 'post',
-    'contentType': 'application/json',
-    'payload': JSON.stringify(payload)
-  };
-
-  try {
-    const response = UrlFetchApp.fetch(url, options);
-    const json = response.getContentText();
-    const data = JSON.parse(json);
-
-    // Assuming the API response has a field named 'result'
-    return data.result;
-  } catch (error) {
-    return 'Error: ' + error.message;
-  }
-}
