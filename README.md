@@ -1,4 +1,4 @@
-# Project Title:  Portable Water Quality Monitoring Device 
+# Project Title:  Smart Water Quality Monitoring System
 
 This is student project on Arduino as to develop **Smart Water Quality Monitoring System**.
 
