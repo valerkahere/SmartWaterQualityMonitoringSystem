@@ -1,18 +1,17 @@
 #include "WiFiS3.h"
 #include <WiFiSSLClient.h> // Use WiFiSSLClient for HTTPS
 
-// ---- WiFi Credentials ----
+// WiFi Credentials
 char ssid[] = "crack"; 
 char pass[] = "rostiklox";     
-// ------------------------------------------
 
 int status = WL_IDLE_STATUS; // the WiFi radio's status
 
-// ---- Google Apps Script Web App URL details ----
+// Google Apps Script Web App URL details
 const char* host = "script.google.com";
 const int httpsPort = 443;
+// Make sure this is your latest deployed script URL
 String scriptPath = "/macros/s/AKfycbzpHCkhFseSgTUMGNdR7Zpez8XpEZa1L1rYHbiR1etMdsl3jQNY-aRARy9uNtVypHyWKw/exec";
-// -----------------------------------------------------------
 
 void setup() {
   Serial.begin(9600);
@@ -54,7 +53,7 @@ void sendDataToSheet(long turbidity, float temperature) {
     return;
   }
   
-  // Changed parameter names to match column headers
+  // Improved URL parameter naming for clarity
   String url = scriptPath + "?turbidity=" + String(turbidity) + "&temperature=" + String(temperature);
   
   Serial.println("Full request URL:");
@@ -67,6 +66,7 @@ void sendDataToSheet(long turbidity, float temperature) {
 
   Serial.println("Request sent");
   
+  // Handle response with timeout
   unsigned long timeout = millis();
   while (client.available() == 0) {
     if (millis() - timeout > 5000) {
@@ -76,11 +76,12 @@ void sendDataToSheet(long turbidity, float temperature) {
     }
   }
 
+  // Process the response
   while(client.available()){
     String line = client.readStringUntil('\r');
     Serial.print(line);
   }
-
+  
   Serial.println();
   Serial.println("Closing connection");
   client.stop();
@@ -88,8 +89,8 @@ void sendDataToSheet(long turbidity, float temperature) {
 
 void loop() {
   // Generate sensor data (fake values)
-  long turbidity = random(0, 100);  // Changed variable name from fakeValue1
-  float temperature = random(0, 1000) / 10.0;  // Changed variable name from fakeValue2
+  long turbidity = random(0, 100);
+  float temperature = random(0, 1000) / 10.0;
   
   Serial.print("Generated sensor data: ");
   Serial.print("Turbidity: ");
@@ -102,7 +103,10 @@ void loop() {
       sendDataToSheet(turbidity, temperature);
   } else {
       Serial.println("WiFi Disconnected. Cannot send data.");
+      // Try to reconnect
+      status = WiFi.begin(ssid, pass);
   }
 
   delay(60000); // Send data every minute
 }
+
