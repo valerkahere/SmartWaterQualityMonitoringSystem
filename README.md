@@ -16,8 +16,8 @@ See the [*Individual reports*](https://github.com/Valeryschka/ArduinoWaterQualit
 Click to see [*Code Samples*](https://github.com/Valeryschka/ArduinoWaterQualitySystem/tree/Arduino-Code
 ) for the project
 
-### 2-nd Deadline Links Github
+### 2-nd Deadline Links Github: [*Project2*](https://github.com/valerkahere/SmartWaterQualityMonitoringSystem/tree/Project2)
 
-See [*Arduino code* ](https://github.com/valerkahere/ArduinoWaterQualitySystem/blob/Project2/ArduinoSpreadsheet.ino)
+See [*Arduino code*](https://github.com/valerkahere/ArduinoWaterQualitySystem/blob/Project2/ArduinoSpreadsheet.ino)
 
 See [*Google Apps Script code*](https://github.com/valerkahere/ArduinoWaterQualitySystem/blob/Project2/Code.gs)
