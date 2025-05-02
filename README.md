@@ -10,8 +10,8 @@ This is student project on Arduino as to develop Smart Water Quality Monitoring 
 
 See the [*Reports*](https://github.com/Valeryschka/ArduinoWaterQualitySystem/tree/Reports) on the project.
 
-See the [*individual reports*](https://github.com/Valeryschka/ArduinoWaterQualitySystem/tree/IndividualReports
+See the [*Individual Reports*](https://github.com/Valeryschka/ArduinoWaterQualitySystem/tree/IndividualReports
 ) on the project.
 
-Access [*code samples*](https://github.com/Valeryschka/ArduinoWaterQualitySystem/tree/Arduino-Code) for the project.
+Access [*Code Samples*](https://github.com/Valeryschka/ArduinoWaterQualitySystem/tree/Arduino-Code) for the project.
 
