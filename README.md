@@ -2,7 +2,7 @@
 
 ## Navigation:   
 
-[Trello Page:](https://trello.com/b/AU3PxAXM/arduino-project-10) Smart Water Quality Monitoring System | Trello 
+[Trello Page:](https://trello.com/b/AU3PxAXM/arduino-project-10)  Smart Water Quality Monitoring System | Trello 
 
 ### 1-st Deadline Links Github
 
