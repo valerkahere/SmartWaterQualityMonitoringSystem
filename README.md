@@ -11,7 +11,7 @@ This is student project on Arduino as to develop **Smart Water Quality Monitorin
 - See the [*Reports*](https://github.com/Valeryschka/ArduinoWaterQualitySystem/tree/Reports) on the project
 - See the [*Individual reports*](https://github.com/Valeryschka/ArduinoWaterQualitySystem/tree/IndividualReports
 ) on the project
-- Click to see [*Code Samples*](https://github.com/Valeryschka/ArduinoWaterQualitySystem/tree/Arduino-Code) mainly for sensor readings: Turbidity and Water Temperature
+- Click to see [*Code Samples*](https://github.com/Valeryschka/ArduinoWaterQualitySystem/tree/Arduino-Code) mainly for sensor readings: Turbidity and Water Temperature.
 
 ### 2-nd Deadline Links Github: [*Project2*](https://github.com/valerkahere/SmartWaterQualityMonitoringSystem/tree/Project2)
 
