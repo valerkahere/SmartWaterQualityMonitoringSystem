@@ -13,6 +13,27 @@ const int httpsPort = 443;
 // Make sure this is your latest deployed script URL
 String scriptPath = "/macros/s/AKfycbzpHCkhFseSgTUMGNdR7Zpez8XpEZa1L1rYHbiR1etMdsl3jQNY-aRARy9uNtVypHyWKw/exec";
 
+// Helper function to print timestamp
+void printTimestamp() {
+  unsigned long ms = millis();
+  unsigned long seconds = ms / 1000;
+  unsigned long minutes = seconds / 60;
+  unsigned long hours = minutes / 60;
+  seconds = seconds % 60;
+  minutes = minutes % 60;
+
+  Serial.print("[");
+  if (hours < 10) Serial.print("0");
+  Serial.print(hours);
+  Serial.print(":");
+  if (minutes < 10) Serial.print("0");
+  Serial.print(minutes);
+  Serial.print(":");
+  if (seconds < 10) Serial.print("0");
+  Serial.print(seconds);
+  Serial.print("] ");
+}
+
 void setup() {
   Serial.begin(9600);
   while (!Serial); // Wait for serial port to connect
