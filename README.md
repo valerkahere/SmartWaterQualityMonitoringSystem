@@ -3,7 +3,6 @@
 
 - [*Trello Page:*](https://trello.com/b/AU3PxAXM/arduino-project-10) Smart Water Quality Monitoring Device | Trello
 - To see the [*Reports*](https://github.com/Valeryschka/ArduinoWaterQualitySystem/tree/Reports) on the project.
-- See the [*individual reports*](https://github.com/Valeryschka/ArduinoWaterQualitySystem/tree/IndividualReports
-) on the project
-- Access [*code samples*](https://github.com/Valeryschka/ArduinoWaterQualitySystem/tree/Arduino-Code) for the project
+- See the [*Individual Reports*](https://github.com/Valeryschka/ArduinoWaterQualitySystem/tree/IndividualReports).
+- Access [*Code Samples*](https://github.com/Valeryschka/ArduinoWaterQualitySystem/tree/Arduino-Code) for the project.
   
