@@ -10,33 +10,12 @@ int status = WL_IDLE_STATUS; // the WiFi radio's status
 // Google Apps Script Web App URL details
 const char* host = "script.google.com";
 const int httpsPort = 443;
-// Make sure this is your latest deployed script URL
-String scriptPath = "/macros/s/AKfycbzpHCkhFseSgTUMGNdR7Zpez8XpEZa1L1rYHbiR1etMdsl3jQNY-aRARy9uNtVypHyWKw/exec";
-
-// Helper function to print timestamp
-void printTimestamp() {
-  unsigned long ms = millis();
-  unsigned long seconds = ms / 1000;
-  unsigned long minutes = seconds / 60;
-  unsigned long hours = minutes / 60;
-  seconds = seconds % 60;
-  minutes = minutes % 60;
-
-  Serial.print("[");
-  if (hours < 10) Serial.print("0");
-  Serial.print(hours);
-  Serial.print(":");
-  if (minutes < 10) Serial.print("0");
-  Serial.print(minutes);
-  Serial.print(":");
-  if (seconds < 10) Serial.print("0");
-  Serial.print(seconds);
-  Serial.print("] ");
-}
+// Make sure this is your deployed script URL (after new deployment)
+String scriptPath = "/macros/s/AKfycbz9aEEitd31oRgB128rYCZxl3UT6cLYrlxCqUJAcS9Ozx_JjanGst9RzSMhPBGkimX-kQ/exec";
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial); // Wait for serial port to connect
+  delay(1000);  // Short delay to stabilize
 
   // check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE) {
@@ -44,28 +23,24 @@ void setup() {
     while (true);
   }
 
-  String fv = WiFi.firmwareVersion();
-  if (fv < WIFI_FIRMWARE_LATEST_VERSION) {
-    Serial.println("Please upgrade the WiFi firmware");
-  }
-
   // attempt to connect to WiFi network:
+  Serial.print("Connecting to WiFi SSID: ");
+  Serial.println(ssid);
   while (status != WL_CONNECTED) {
-    Serial.print("Attempting to connect to SSID: ");
-    Serial.println(ssid);
     status = WiFi.begin(ssid, pass);
-    delay(10000);
+    // wait for connection:
+    delay(5000);
   }
 
-  Serial.println("Connected to WiFi");
-  IPAddress ip = WiFi.localIP();
+  Serial.println("Connected to WiFi!");
   Serial.print("IP Address: ");
-  Serial.println(ip);
+  Serial.println(WiFi.localIP());
 }
 
 void sendDataToSheet(long turbidity, float temperature) {
   WiFiSSLClient client;
   
+  Serial.println("\n------------------------------");
   Serial.print("Connecting to ");
   Serial.println(host);
   
@@ -74,37 +49,57 @@ void sendDataToSheet(long turbidity, float temperature) {
     return;
   }
   
-  // Improved URL parameter naming for clarity
+  // Build URL with parameters
   String url = scriptPath + "?turbidity=" + String(turbidity) + "&temperature=" + String(temperature);
   
-  Serial.println("Full request URL:");
+  Serial.println("Request URL:");
   Serial.println("https://" + String(host) + url);
   
+  // Improved HTTP request with more headers
   client.print(String("GET ") + url + " HTTP/1.1\r\n" +
                "Host: " + host + "\r\n" +
                "User-Agent: ArduinoWiFi/1.1\r\n" +
-               "Connection: close\r\n\r\n");
+               "Connection: close\r\n" +
+               "\r\n");
 
-  Serial.println("Request sent");
+  Serial.println("Request sent. Waiting for response...");
   
-  // Handle response with timeout
+  // Wait for server response with better timeout handling
   unsigned long timeout = millis();
   while (client.available() == 0) {
-    if (millis() - timeout > 5000) {
-      Serial.println(">>> Client Timeout !");
+    if (millis() - timeout > 10000) {
+      Serial.println(">>> Response timeout!");
       client.stop();
       return;
     }
   }
 
-  // Process the response
-  while(client.available()){
-    String line = client.readStringUntil('\r');
-    Serial.print(line);
+  // Process and display response headers
+  Serial.println("Response received:");
+  String responseStatus = "";
+  bool headersDone = false;
+  
+  while (client.available()) {
+    String line = client.readStringUntil('\n');
+    line.trim();
+    
+    if (responseStatus == "" && line.startsWith("HTTP/1.")) {
+      responseStatus = line;
+      Serial.println(responseStatus);
+    }
+    
+    // Empty line marks end of headers
+    if (line == "") {
+      headersDone = true;
+    }
+    
+    // Print response body
+    if (headersDone && line.length() > 0) {
+      Serial.println("BODY: " + line);
+    }
   }
   
-  Serial.println();
-  Serial.println("Closing connection");
+  Serial.println("Connection closed");
   client.stop();
 }
 
@@ -113,7 +108,8 @@ void loop() {
   long turbidity = random(0, 100);
   float temperature = random(0, 1000) / 10.0;
   
-  Serial.print("Generated sensor data: ");
+  Serial.println("\n****************************");
+  Serial.println("Generating new sensor data:");
   Serial.print("Turbidity: ");
   Serial.print(turbidity);
   Serial.print(", Temperature: ");
@@ -121,13 +117,11 @@ void loop() {
 
   // Send data using Apps Script method
   if (WiFi.status() == WL_CONNECTED) {
-      sendDataToSheet(turbidity, temperature);
+    sendDataToSheet(turbidity, temperature);
   } else {
-      Serial.println("WiFi Disconnected. Cannot send data.");
-      // Try to reconnect
-      status = WiFi.begin(ssid, pass);
+    Serial.println("WiFi Disconnected. Attempting to reconnect...");
+    status = WiFi.begin(ssid, pass);
   }
 
-  delay(60000); // Send data every minute
+  delay(30000); // Send data every minute
 }
-
