@@ -17,3 +17,4 @@ This is student project on Arduino as to develop **Smart Water Quality Monitorin
 
 - See [*Arduino code*](https://github.com/valerkahere/ArduinoWaterQualitySystem/blob/Project2/ArduinoSpreadsheet.ino)
 - See [*Google Apps Script code*](https://github.com/valerkahere/ArduinoWaterQualitySystem/blob/Project2/Code.gs)
+- See [*Individual Reports for 2nd deadline*](https://github.com/valerkahere/SmartWaterQualityMonitoringSystem/tree/Project2/IndividualReports)
