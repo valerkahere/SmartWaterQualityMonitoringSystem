@@ -1,6 +1,6 @@
 // === CONFIGURATION ===
-const AQICN_TOKEN = "YOUR_TOKEN_HERE"; // Your token 
-const SPREADSHEET_ID = 'YOUR_SHEET_ID'; // Your Sheet ID
+const AQICN_TOKEN = "YOUR_TOKEN"; // Your token 
+const SPREADSHEET_ID = 'YOUR_ID'; // Your Sheet ID
 
 function doGet(e) { 
   Logger.log("Received request: " + JSON.stringify(e)); // Log incoming request
@@ -137,42 +137,8 @@ function tryMultipleAqiEndpoints() {
 
 
 
-// Test function to check API endpoints (No changes needed here)
+// Test function to check API endpoints
 function testEndpoints() {
   const result = tryMultipleAqiEndpoints();
   Logger.log(JSON.stringify(result));
 }
-
-function GPT(inputString, cellRange) {
-  const url = 'URL'; // Replace with your API endpoint
-
-  // cellRange is already an array of values
-  const rangeValues = cellRange;
-  
-  // Flatten the range values into a single array if needed
-  const flattenedValues = rangeValues.flat();
-
-  const payload = {
-    'yourDataField1': inputString, // Adjust according to your API requirements
-    'yourDataField2': flattenedValues // Adjust according to your API requirements
-  };
-
-  const options = {
-    'method': 'post',
-    'contentType': 'application/json',
-    'payload': JSON.stringify(payload)
-  };
-
-  try {
-    const response = UrlFetchApp.fetch(url, options);
-    const json = response.getContentText();
-    const data = JSON.parse(json);
-
-    // Assuming the API response has a field named 'result'
-    return data.result;
-  } catch (error) {
-    return 'Error: ' + error.message;
-  }
-}
-
-
