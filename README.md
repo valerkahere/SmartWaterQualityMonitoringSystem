@@ -1,6 +1,8 @@
-# Project Title:  Smart Water Quality Monitoring System
+# Project Title: Smart Water Quality Monitoring System
 
-This is student project on Arduino as to develop **Smart Water Quality Monitoring System**.
+This is student project on Arduino as to develop a **Smart Water Quality Monitoring System**.
+
+Check out our **[video](https://atlantictu-my.sharepoint.com/:v:/g/personal/s00273868_atu_ie/ERwE7ofIXW9HjFHY7hdNvT4Bq1ArrgUsvb0llGcEs-hpaQ?e=vkDEbr)**!
 
 ## Links to:   
 
